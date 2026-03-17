@@ -64,7 +64,7 @@ app.exe links.txt
 1. Clone the repository:
 
    ```
-   git clone https://github.com/yourusername/snatch-dl.git
+   git clone https://github.com/ChandraBhan07/snatch-dl.git
    cd snatch-dl
    ```
 
@@ -82,7 +82,7 @@ app.exe links.txt
 
 #### Option 2: Precompiled Zip (For Easy Use)
 
-1. Download the latest release ZIP from the Releases page.
+1. Download the latest release ZIP from the Releases page or click here [Download Latest Release](https://github.com/ChandraBhan07/snatchDL/releases/latest).
 
 2. Extract the ZIP to any folder.
 
