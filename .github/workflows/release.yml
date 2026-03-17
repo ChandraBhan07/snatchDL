@@ -1,0 +1,62 @@
+name: Build and Release (C++)
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set tag environment variable
+        run: echo "TAG=$env:GITHUB_REF_NAME" >> $env:GITHUB_ENV
+
+      - name: Install Ninja
+        run: choco install ninja -y
+
+      - name: Configure CMake
+        run: cmake -S . -B build -G "Ninja"
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Download latest yt-dlp
+        run: |
+          curl -L -o yt-dlp.exe https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: myapp
+          path: app.exe
+
+      - name: Create empty file
+        run: New-Item links.txt -ItemType File
+
+      - name: Prepare package
+        run: |
+          mkdir package\data\others
+          copy app.exe package\
+          copy config.json package\
+          copy links.txt package\
+          copy yt-dlp.exe package\data\others\
+
+      - name: Create ZIP
+        run: Compress-Archive -Path package\* -DestinationPath snatchDL-${{ env.TAG }}.zip
+
+      - name: Create or update release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG }}
+          name: Release ${{ env.TAG }}
+          files: snatchDL-${{ env.TAG }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
