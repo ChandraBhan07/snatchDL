@@ -58,7 +58,7 @@ The easiest way to get started is to download a precompiled release.
 5. Run Snatch DL with a links file:
     
     ```
-    .\app.exe links.txt
+    .\snatchDL links.txt
     ```
     
     The links file can be empty if you want to start with clipboard monitoring.
@@ -86,7 +86,7 @@ cmake --build build --config Release
 
 CMake will configure the project and invoke the selected build system. The executable's output location depends on the generator used.
 
-Run `app.exe` from the appropriate output location, using a links file as an argument. For available commands and options, see Usage.
+Run `snatchDL` from the appropriate output location, using a links file as an argument. For available commands and options, see Usage.
 
 
 ## Usage
