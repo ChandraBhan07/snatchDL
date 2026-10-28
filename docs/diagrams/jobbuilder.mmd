@@ -1,0 +1,24 @@
+flowchart TD
+    Input@{ shape: manual-input, label: "Input File" }
+    Logs@{ shape: docs, label: "Logs" }
+    JHistory@{ shape: rounded, label: "Job History" }
+    JBuilder@{ shape: rounded, label: "Job Builder" }
+
+
+
+    Decision@{ shape: diam, label: "Valid Url?" }
+    DecisionJob@{ shape: diam, label: "Valid Job?" }
+    DBL@{ shape: cyl, label: "Listening Queue" }
+    DBI@{ shape: cyl, label: "Incoming Queue" }
+    
+
+    Input --> Decision
+    DBL --> Decision
+    Logs --> JHistory
+    JHistory --> JBuilder
+    Decision -->|Yes| JBuilder
+    JBuilder --> DecisionJob
+    DecisionJob --> |Yes| DBI
+
+    style Decision fill:#e8f5e9,stroke:#43a047
+    style DecisionJob fill:#fff3e0,stroke:#fb8c00

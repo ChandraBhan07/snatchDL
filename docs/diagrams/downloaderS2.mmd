@@ -1,0 +1,46 @@
+
+flowchart TD
+    next@{ shape: rounded, label: "Continue from Stage 1" }
+    batch@{ shape: cyl, label: "Batch/ Local Priority Queue" }
+    pick@{ shape: rounded, label: "Peek at Earliest-Scheduled Job" }
+    ready@{ shape: diamond, label: "Is Job Ready?" }
+    sleep@{ shape: rounded, label: "Wait Until Scheduled Time" }
+    running@{ shape: rounded, label: "Pop & Mark Job as Running" }
+    retry@{ shape: diamond, label: "Has Job Been Attempted Before?" }
+    cookie@{ shape: rounded, label: "Acquire Cookie from Cookie Manager" }
+    execute@{ shape: rounded, label: "Process Runner Executes Download" }
+    success@{ shape: diamond, label: "Download Successful?" }
+    succeeded@{ shape: rounded, label: "Mark Job as Succeeded" }
+    failed@{ shape: rounded, label: "Mark Job as Failed" }
+    report@{ shape: rounded, label: "Report Cookie Outcome (if applicable)" }
+    update@{ shape: rounded, label: "Increment Attempt Count" }
+    incoming@{ shape: cyl, label: "Incoming Queue" }
+
+    next --> batch
+    batch --> pick
+    pick --> ready
+    ready -- No --> sleep
+    sleep -. Recheck .-> pick
+    ready -- Yes --> running
+    running --> retry
+    retry -- Yes --> cookie
+    retry -- No --> execute
+    cookie --> execute
+    execute --> success
+    success -- Yes --> succeeded
+    success -- No --> failed
+    succeeded --> report
+    failed --> report
+    report --> update
+    update --> incoming
+
+    style pick fill:#D5F5E3,stroke:#239B56,color:#1B2631
+    style batch fill:#D5F5E3,stroke:#239B56,color:#1B2631
+    style ready fill:#FCF3CF,stroke:#D4AC0D,color:#1B2631
+    style sleep fill:#D7BDE2,stroke:#884EA0,color:#1B2631
+    style cookie fill:#D6EAF8,stroke:#2471A3,color:#1B2631
+    style execute fill:#D6EAF8,stroke:#2471A3,color:#1B2631
+    style success fill:#FCF3CF,stroke:#D4AC0D,color:#1B2631
+    style succeeded fill:#D5F5E3,stroke:#239B56,color:#1B2631
+    style failed fill:#FADBD8,stroke:#C0392B,color:#1B2631
+    style incoming fill:#D5F5E3,stroke:#239B56,color:#1B2631

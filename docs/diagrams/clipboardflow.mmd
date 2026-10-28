@@ -1,0 +1,25 @@
+flowchart TD
+    listener@{ shape: rounded, label: "listener" }
+    lqueue@{ shape: cyl, label: "Listener Queue" }
+    worker@{ shape: rounded, label: "Listener Worker" }
+    builder@{ shape: rect, label: "Job Builder<br/>Filters & Validation" }
+    decision@{ shape: diam, label: "Job returned?" }
+    file@{ shape: manual-input, label: "Input File" }
+    inqueue@{ shape: cyl, label: "Incoming Queue" }
+
+    listener --> |"Enqueue clipboard text"| lqueue
+    lqueue --> worker
+    worker --> builder
+    worker --> |Append original URL| file
+    worker --> |"Enqueue job"| inqueue
+    builder --> decision
+    decision --> |Yes| file
+    decision --> |No| inqueue
+    decision -- "No: filtered / invalid" --> END["Discard / Skip"] 
+    
+    style listener fill:#D6EAF8,stroke:#2471A3,color:#154360,stroke-width:2px
+    style worker fill:#D5F5E3,stroke:#239B56,color:#145A32,stroke-width:2px
+    style builder fill:#E8DAEF,stroke:#884EA0,color:#512E5F,stroke-width:3px
+    style decision fill:#FCF3CF,stroke:#D4AC0D,color:#784212,stroke-width:2px
+    style inqueue fill:#D5F5E3,stroke:#239B56,color:#145A32,stroke-width:2px
+    style END fill:#FADBD8,stroke:#C0392B,color:#78281F,stroke-width:2px

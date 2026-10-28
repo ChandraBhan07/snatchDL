@@ -1,0 +1,95 @@
+flowchart LR
+
+    subgraph core["Core Pipeline"]
+    direction RL
+        jobmanager@{ shape: rect, label: "Job Manager" }
+        downloader@{ shape: rect, label: "Downloader"}
+        logging@{ shape: rounded, label: "Logging"}
+        cookiemanager@{ shape: rounded, label: "Cookie Manager"}
+
+        subgraph bus["DataBus"]
+            direction TB
+            inqueue@{ shape: cyl, label:"Incoming Queue"}
+            outqueue@{ shape: cyl, label:"Outgoing Queue"}
+        end
+
+        downloader -- "Update & Push Jobs" --> inqueue
+        inqueue -- "Consume Jobs" --> jobmanager
+        jobmanager -- "Schedule & Push Jobs" --> outqueue
+        jobmanager --> logging
+        cookiemanager --> downloader
+        outqueue -- "Consume Jobs" --> downloader
+    
+    end
+
+
+    subgraph job["Job Creation"]
+    direction TD
+        inputfile@{shape: manual-input, label: "Input File"}
+        
+        logs@{ shape: docs, label: "Logs" }
+        jobhistory@{ shape: rounded, label: "Job History" }
+        jobbuilder@{ shape: rounded, label: "Job Builder" }
+        subgraph listen["Clipboard Monitoring"]
+        direction TD
+            lisqueue@{ shape: cyl, label: "Listening Queue" }
+            listener@{ shape: rounded, label: "Listener"}
+            worker@{ shape: rounded, label: "Listener Worker"}
+
+            
+        end
+    logs --> jobhistory
+    jobhistory --> jobbuilder
+    inputfile --> jobbuilder
+    listener --> lisqueue
+    lisqueue --> worker
+    worker --> jobbuilder
+    worker --> inputfile
+    jobbuilder -->inqueue
+
+end
+
+
+
+
+
+    
+
+%% ===== SUBGRAPH CONTAINERS =====
+style core fill:#F0F5FA,stroke:#A9BED3,color:#243B53,stroke-width:2px
+style bus fill:#FEFEFE,stroke:#91A9BF,color:#243B53,stroke-width:1.5px
+style job fill:#F5F2FA,stroke:#C5B5DF,color:#44315F,stroke-width:2px
+style listen fill:#FDF7E9,stroke:#E5CD94,color:#684817,stroke-width:1.5px
+
+%% ===== CORE PIPELINE =====
+style jobmanager fill:#E2EDFA,stroke:#4778A8,color:#183B5B,stroke-width:2px
+style downloader fill:#FCEBCB,stroke:#B98524,color:#684817,stroke-width:2px
+%% style logging fill:#E9EFF5,stroke:#71869A,color:#30465A,stroke-width:1.5px
+%% style cookiemanager fill:#E9EFF5,stroke:#71869A,color:#30465A,stroke-width:1.5px
+
+%% ===== QUEUES =====
+style inqueue fill:#DDF3E8,stroke:#37866A,color:#174D3B,stroke-width:2px
+style outqueue fill:#DDF3E8,stroke:#37866A,color:#174D3B,stroke-width:2px
+%% style lisqueue fill:#DDF3E8,stroke:#37866A,color:#174D3B,stroke-width:2px
+
+%% ===== JOB CREATION =====
+%% style inputfile fill:#F0F5FA,stroke:#71869A,color:#30465A,stroke-width:1.5px
+style logs fill:#EEE7FA,stroke:#8265AC,color:#44315F,stroke-width:1.5px
+style jobhistory fill:#EEE7FA,stroke:#8265AC,color:#44315F,stroke-width:2px
+style jobbuilder fill:#E2EDFA,stroke:#4778A8,color:#183B5B,stroke-width:2px
+
+%% ===== CLIPBOARD MONITORING =====
+style listener fill:#FCEBCB,stroke:#B98524,color:#684817,stroke-width:2px
+style worker fill:#F9E3E3,stroke:#B95D60,color:#702D30,stroke-width:2px
+
+%% Clipboard Monitoring — cool teal container
+style listen fill:#EDF7F6,stroke:#8BBDB7,color:#244B49,stroke-width:1.5px
+
+%% Listener — retain execution-component identity
+style listener fill:#FCEBCB,stroke:#B98524,color:#684817,stroke-width:2px
+
+%% Listening Queue — retain queue identity
+%% style lisqueue fill:#DDF3E8,stroke:#37866A,color:#174D3B,stroke-width:2px
+
+%% Listener Worker — restrained coral accent
+style worker fill:#F9E3E3,stroke:#B95D60,color:#702D30,stroke-width:2px

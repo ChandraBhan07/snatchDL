@@ -1,0 +1,31 @@
+flowchart TD
+    jmanager@{ shape: rounded, label: "Job Manager" }
+    wait@{ shape: rounded, label: "Wait for Incoming Queue" }
+    pop@{ shape: rounded, label: "Pop from Incoming Queue" }
+    failure@{ shape: diam, label: "State = Failed?" }
+    success@{ shape: diam, label: "State = Succeeded?" }
+    maxAttemps@{ shape: diam, label: "Attemps > Max Attempts?" }
+    schedule@{shape: trap-t, label: "Schedule Jobs"}
+    jobHistory@{shape: rounded, label: "Job History"}
+    outqueue@{ shape: cyl, label: "Outgoing Queue" }
+    
+
+    jmanager --> wait
+    wait --> pop
+    pop --> success
+    pop --> failure
+    failure --> maxAttemps
+    maxAttemps --> |No| schedule
+    maxAttemps --> |Yes| jobHistory
+    success --> jobHistory
+    pop --> schedule
+    schedule --> outqueue
+
+    
+    style success fill:#e8f5e9,stroke:#43a047
+    style failure fill:#fff3e0,stroke:#fb8c00
+    style maxAttemps fill:#F5B7B1,stroke:#C0392B
+    style schedule fill:#D6EAF8,stroke:#2471A3
+    style pop fill:#D6EAF8,stroke:#2471A3
+    style wait fill:#D7BDE2,stroke:#884EA0
+    style outqueue fill:#D5F5E3,stroke:#239B56

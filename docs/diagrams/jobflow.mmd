@@ -1,0 +1,24 @@
+flowchart RL
+    jmanager["Job Manager"]
+
+    subgraph bus["DataBus"]
+        direction TB
+        inqueue[("Incoming Queue")]
+        outqueue[("Outgoing Queue")]
+    end
+
+    downloader["Downloader"]
+
+    downloader -- "Update & Push Jobs" --> inqueue
+    inqueue -- "Consume Jobs" --> jmanager
+
+    jmanager -- "Schedule & Push Jobs" --> outqueue
+    outqueue -- "Consume Jobs" --> downloader
+
+    style jmanager fill:#D6EAF8,stroke:#2471A3,color:#154360,stroke-width:2px
+    style downloader fill:#FCF3CF,stroke:#D4AC0D,color:#7D6608,stroke-width:2px
+    style inqueue fill:#D5F5E3,stroke:#239B56,color:#145A32,stroke-width:2px
+    style outqueue fill:#D5F5E3,stroke:#239B56,color:#145A32,stroke-width:2px
+    style bus fill:#F4F6F7,stroke:#7B7D7D,color:#2C3E50,stroke-width:2px
+
+ 
