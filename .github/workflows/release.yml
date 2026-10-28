@@ -1,0 +1,167 @@
+name: Official Release
+
+on: 
+  push: 
+    tags:
+     - "v*"
+
+permissions: 
+  contents: write
+
+jobs: 
+  build: 
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set tag environment variable
+        shell: pwsh
+        run: |
+          "TAG=$env:GITHUB_REF_NAME" >> $env:GITHUB_ENV
+      - name: Install Ninja
+        run: choco install ninja -y
+
+      - name: Configure CMake
+        run: cmake -S . -B build -G "Ninja"
+
+      - name: Build
+        run: cmake --build build --config Release
+
+
+
+      - name: Download FFmpeg
+        shell: pwsh
+        run: |
+          $primary = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip"
+          $fallback = "https://media.githubusercontent.com/media/${{ github.repository_owner }}/prerequisites/main/windows-x64/ffmpeg.exe"
+          $downloaded = $false
+          Remove-Item "ffmpeg.exe" -Force -ErrorAction SilentlyContinue
+          Remove-Item "ffmpeg.zip" -Force -ErrorAction SilentlyContinue
+          Remove-Item "ffmpeg-temp" -Recurse -Force -ErrorAction SilentlyContinue
+          # Primary: Gyan.dev official Windows build
+          Write-Host "Trying official Gyan.dev FFmpeg build..."
+          curl.exe -fL --retry 2 --retry-all-errors `
+            --connect-timeout 15 --max-time 300 `
+            -o ffmpeg.zip $primary
+          if ($LASTEXITCODE -eq 0 -and
+              (Test-Path "ffmpeg.zip") -and
+              (Get-Item "ffmpeg.zip").Length -gt 1MB) {
+            try {
+              Expand-Archive -Path "ffmpeg.zip" -DestinationPath "ffmpeg-temp" -Force
+              $binary = Get-ChildItem "ffmpeg-temp" -Filter "ffmpeg.exe" -Recurse |
+                Select-Object -First 1
+              if ($null -ne $binary) {
+                Copy-Item $binary.FullName "ffmpeg.exe" -Force
+                & .\ffmpeg.exe -version *> $null
+                if ($LASTEXITCODE -eq 0) {
+                  $downloaded = $true
+                  Write-Host "FFmpeg downloaded from Gyan.dev."
+                }
+              }
+            }
+            catch {
+              Write-Host "Official archive extraction or verification failed."
+            }
+          }
+          else {
+            Write-Host "Official archive download failed."
+          }
+          # Secondary: GitHub LFS-hosted executable
+          if (!$downloaded) {
+            Write-Host "Trying GitHub LFS backup..."
+            Remove-Item "ffmpeg.exe" -Force -ErrorAction SilentlyContinue
+            curl.exe -fL --retry 2 --retry-all-errors `
+              --connect-timeout 15 --max-time 300 `
+              -o ffmpeg.exe $fallback
+            if ($LASTEXITCODE -eq 0 -and
+                (Test-Path "ffmpeg.exe") -and
+                (Get-Item "ffmpeg.exe").Length -gt 1MB) {
+              & .\ffmpeg.exe -version *> $null
+              if ($LASTEXITCODE -eq 0) {
+                $downloaded = $true
+                Write-Host "FFmpeg downloaded from GitHub LFS backup."
+              }
+            }
+          }
+          Remove-Item "ffmpeg.zip" -Force -ErrorAction SilentlyContinue
+          Remove-Item "ffmpeg-temp" -Recurse -Force -ErrorAction SilentlyContinue
+          if (!$downloaded) {
+            Remove-Item "ffmpeg.exe" -Force -ErrorAction SilentlyContinue
+            throw "Failed to download a valid FFmpeg executable from both sources."
+          }
+          Write-Host "FFmpeg is ready."
+          Get-Item "ffmpeg.exe" | Select-Object Name, Length
+          .\ffmpeg.exe -version
+      - name: Download latest yt-dlp
+        shell: pwsh
+        run: |
+          $url = "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe"
+          $fallback = "https://raw.githubusercontent.com/${{ github.repository_owner }}/prerequisites/main/windows-x64/yt-dlp.exe"
+  
+          Write-Host "Trying official yt-dlp download..."
+  
+          curl.exe -fL --retry 2 -o yt-dlp.exe $url
+  
+          if ($LASTEXITCODE -ne 0 -or !(Test-Path "yt-dlp.exe") -or (Get-Item "yt-dlp.exe").Length -eq 0) {
+            Write-Host "Official download failed. Trying backup storage..."
+  
+            Remove-Item "yt-dlp.exe" -Force -ErrorAction SilentlyContinue
+  
+            curl.exe -fL --retry 2 -o yt-dlp.exe $fallback
+  
+            if ($LASTEXITCODE -ne 0 -or !(Test-Path "yt-dlp.exe") -or (Get-Item "yt-dlp.exe").Length -eq 0) {
+              throw "Failed to download yt-dlp from both sources."
+            }
+          }
+  
+          Write-Host "yt-dlp downloaded successfully."
+
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle
+          path: |
+            snatchDL.exe
+          if-no-files-found: warn
+
+      - name: Prepare package
+        shell: pwsh
+        run: |
+          $candidates = @(
+            "snatchDL.exe"
+          )
+  
+          $app = $candidates |
+            Where-Object { Test-Path $_ -PathType Leaf } |
+            Select-Object -First 1
+  
+          if (-not $app) {
+            throw "snatchDL.exe was not found in build/ or build/Release/. Check your CMake target name and output path."
+          }
+  
+          New-Item -ItemType Directory -Force -Path "package/data/others" | Out-Null
+  
+          Copy-Item $app "package/snatchDL.exe"
+          New-Item -ItemType File -Force -Path "package/links.txt" | Out-Null
+          Copy-Item "yt-dlp.exe" "package/data/others/yt-dlp.exe"
+          Copy-Item "ffmpeg.exe" "package/data/others/ffmpeg.exe"
+
+      - name: Create ZIP
+        shell: pwsh
+        run: |
+          $zip = "snatchDL-$env:TAG-x64.zip"
+          Compress-Archive -Path "package/*" -DestinationPath $zip -Force
+          if (!(Test-Path $zip) -or (Get-Item $zip).Length -eq 0) {
+            throw "Failed to create release ZIP."
+          }
+      - name: Create or update release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG }}
+          name: Release ${{ env.TAG }}
+          files: snatchDL-${{ env.TAG }}-x64.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
